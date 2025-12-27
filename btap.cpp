@@ -1,29 +1,29 @@
 #include <iostream>
+#include <vector>
 #include <string>
-#include <iomanip>
-#include <limits>
 
 using namespace std;
 
-enum Status { IN_PROGRESS = 0, DONE = 1, FAILED = 2 };
+enum Status {
+    DANG_LAM = 1,
+    HOAN_THANH,
+    KHONG_HOAN_THANH
+};
 
 string statusToString(Status st) {
-    if (st == IN_PROGRESS) return "Dang lam";
-    if (st == DONE) return "Hoan thanh";
+    if (st == DANG_LAM) return "Dang lam";
+    if (st == HOAN_THANH) return "Hoan thanh";
     return "Khong hoan thanh";
 }
 
 bool isValidDateFormat(const string& d) {
-
     if (d.size() != 10) return false;
     if (d[2] != '/' || d[5] != '/') return false;
-
 
     for (int i = 0; i < 10; i++) {
         if (i == 2 || i == 5) continue;
         if (d[i] < '0' || d[i] > '9') return false;
     }
-
 
     int day   = (d[0] - '0') * 10 + (d[1] - '0');
     int month = (d[3] - '0') * 10 + (d[4] - '0');
@@ -36,146 +36,109 @@ bool isValidDateFormat(const string& d) {
     return true;
 }
 
-void clearInputLine() {
-    cin.clear();
-    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-}
-
 class Work {
 private:
     int id;
     string content;
     int hours;
-    string createdAt; 
+    string createDate;
     Status status;
 
 public:
-    Work() {
-        id = 0;
-        content = "";
-        hours = 0;
-        createdAt = "01/01/2000";
-        status = IN_PROGRESS;
-    }
-
-    Work(int _id, const string& _content, int _hours, const string& _createdAt) {
+    // Ham tao
+    Work(int _id, string _content, int _hours, string _date) {
         id = _id;
         content = _content;
         hours = _hours;
-        createdAt = _createdAt;
-        status = IN_PROGRESS;
+        createDate = _date;
+        status = DANG_LAM;
     }
 
-    int getId() const { return id; }
-    Status getStatus() const { return status; }
+   
+    int getId() { return id; }
+    Status getStatus() { return status; }
 
-    void setContent(const string& c) { content = c; }
+    void setContent(string newContent) { content = newContent; }
 
-    bool setStatus(Status newStatus) {
-
-        if (status != IN_PROGRESS) return false;
+    bool changeStatus(Status newStatus) {
+        if (status != DANG_LAM) return false;
         status = newStatus;
         return true;
     }
 
-    void printRow() const {
-        cout << left
-             << setw(6)  << id
-             << setw(28) << content.substr(0, 27)
-             << setw(8)  << hours
-             << setw(12) << createdAt
-             << setw(16) << statusToString(status)
+    void display() {
+        cout << "ID: " << id
+             << " | Noi dung: " << content
+             << " | Gio: " << hours
+             << " | Ngay tao: " << createDate
+             << " | Trang thai: " << statusToString(status)
              << "\n";
     }
 };
 
 class WorkManager {
 private:
-    Work list[100];
-    int size;
-    int nextId;
+    vector<Work> list;
+    int nextId = 1;
 
-public:
-    WorkManager() {
-        size = 0;
-        nextId = 1;
+    int findIndexById(int id) {
+        for (int i = 0; i < (int)list.size(); i++) {
+            if (list[i].getId() == id) return i;
+        }
+        return -1;
     }
 
+public:
     void showMenu() {
-        cout << "\n===================MENU====================\n";
+        cout << "\n-------------------MENU----------------------\n";
         cout << "1. Hien thi danh sach\n";
         cout << "2. Them cong viec\n";
         cout << "3. Cap nhat noi dung CV\n";
         cout << "4. Chuyen trang thai\n";
         cout << "5. Loc cong viec theo trang thai\n";
         cout << "6. Thoat\n";
-        cout << "===========================================\n";
-        cout << "Chon: ";
+        cout << "--------------------------------------------\n";
+        cout << "Nhap lua chon: ";
     }
 
-    void showHeader() const {
-        cout << left
-             << setw(6)  << "ID"
-             << setw(28) << "Noi dung"
-             << setw(8)  << "Gio"
-             << setw(12) << "Ngay tao"
-             << setw(16) << "Trang thai"
-             << "\n";
-        cout << "========================================\n";
-    }
-
-    int findIndexById(int id) const {
-        for (int i = 0; i < size; i++) {
-            if (list[i].getId() == id) return i;
-        }
-        return -1;
-    }
-
-    void showList() const {
-        if (size == 0) {
-            cout << "Danh sach dang rong.\n";
+    void showList() {
+        if (list.size() == 0) {
+            cout << "Danh sach cong viec dang rong!\n";
             return;
         }
-        showHeader();
-        for (int i = 0; i < size; i++) {
-            list[i].printRow();
+        for (int i = 0; i < (int)list.size(); i++) {
+            list[i].display();
         }
     }
 
     void addWork() {
-        if (size >= 100) {
-            cout << "Danh sach day, khong them duoc.\n";
-            return;
-        }
-
-        string content;
+        string content, date;
         int hours;
-        string date;
 
-        cout << "Nhap noi dung: ";
-        clearInputLine();
+        cout << "Nhap noi dung cong viec: ";
         getline(cin, content);
         while (content.size() == 0) {
-            cout << "Noi dung khong duoc rong. Nhap lai: ";
+            cout << "Noi dung khong duoc de trong. Nhap lai: ";
             getline(cin, content);
         }
 
         cout << "Nhap so gio can thuc hien: ";
         while (!(cin >> hours) || hours <= 0) {
-            cout << "So gio phai la so duong. Nhap lai: ";
-            clearInputLine();
+            cout << "So gio phai la so nguyen > 0. Nhap lai: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
         }
+        cin.ignore(10000, '\n');
 
         cout << "Nhap ngay tao (dd/MM/yyyy): ";
-        clearInputLine();
         getline(cin, date);
         while (!isValidDateFormat(date)) {
             cout << "Sai dinh dang. Nhap lai (dd/MM/yyyy): ";
             getline(cin, date);
         }
 
-        list[size] = Work(nextId, content, hours, date);
-        size++;
+        Work w(nextId, content, hours, date);
+        list.push_back(w);
         nextId++;
 
         cout << "Them cong viec thanh cong!\n";
@@ -184,11 +147,12 @@ public:
     void updateContent() {
         int id;
         cout << "Nhap ID cong viec can cap nhat: ";
-        if (!(cin >> id)) {
-            cout << "Nhap sai.\n";
-            clearInputLine();
-            return;
+        while (!(cin >> id)) {
+            cout << "Nhap sai. Nhap lai ID: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
         }
+        cin.ignore(10000, '\n');
 
         int idx = findIndexById(id);
         if (idx == -1) {
@@ -198,10 +162,9 @@ public:
 
         string newContent;
         cout << "Nhap noi dung moi: ";
-        clearInputLine();
         getline(cin, newContent);
         while (newContent.size() == 0) {
-            cout << "Noi dung khong duoc rong. Nhap lai: ";
+            cout << "Noi dung khong duoc de trong. Nhap lai: ";
             getline(cin, newContent);
         }
 
@@ -211,66 +174,68 @@ public:
 
     void changeStatus() {
         int id;
-        cout << "Nhap ID cong viec can doi trang thai: ";
-        if (!(cin >> id)) {
-            cout << "Nhap sai.\n";
-            clearInputLine();
-            return;
+        cout << "Nhap ID cong viec can chuyen trang thai: ";
+        while (!(cin >> id)) {
+            cout << "Nhap sai. Nhap lai ID: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
         }
 
         int idx = findIndexById(id);
         if (idx == -1) {
             cout << "Khong tim thay cong viec ID = " << id << "\n";
+            cin.ignore(10000, '\n');
             return;
         }
 
         cout << "Chon trang thai moi:\n";
-        cout << "1. Hoan thanh\n";
-        cout << "2. Khong hoan thanh\n";
-        cout << "Chon: ";
+        cout << "2. Hoan thanh\n";
+        cout << "3. Khong hoan thanh\n";
+        cout << "Nhap (2/3): ";
 
-        int opt;
-        if (!(cin >> opt) || (opt != 1 && opt != 2)) {
-            cout << "Lua chon khong hop le.\n";
-            clearInputLine();
-            return;
+        int c;
+        while (!(cin >> c) || (c != 2 && c != 3)) {
+            cout << "Chi duoc nhap 2 hoac 3. Nhap lai: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
         }
+        cin.ignore(10000, '\n');
 
-        Status newStatus = (opt == 1) ? DONE : FAILED;
-        if (!list[idx].setStatus(newStatus)) {
-            cout << "Chi duoc doi trang thai khi cong viec dang lam!\n";
-            return;
+        Status newSt = (c == 2) ? HOAN_THANH : KHONG_HOAN_THANH;
+
+        if (!list[idx].changeStatus(newSt)) {
+            cout << "Chi duoc chuyen trang thai khi cong viec dang o trang thai 'Dang lam'!\n";
+        } else {
+            cout << "Chuyen trang thai thanh cong!\n";
         }
-
-        cout << "Doi trang thai thanh cong!\n";
     }
 
-    void filterByStatus() const {
+    void filterByStatus() {
         cout << "Chon trang thai can loc:\n";
-        cout << "0. Dang lam\n";
-        cout << "1. Hoan thanh\n";
-        cout << "2. Khong hoan thanh\n";
-        cout << "Chon: ";
+        cout << "1. Dang lam\n";
+        cout << "2. Hoan thanh\n";
+        cout << "3. Khong hoan thanh\n";
+        cout << "Nhap (1-3): ";
 
-        int st;
-        if (!(cin >> st) || st < 0 || st > 2) {
-            cout << "Lua chon khong hop le.\n";
-            clearInputLine();
-            return;
+        int s;
+        while (!(cin >> s) || (s < 1 || s > 3)) {
+            cout << "Chi duoc nhap 1-3. Nhap lai: ";
+            cin.clear();
+            cin.ignore(10000, '\n');
         }
+        cin.ignore(10000, '\n');
 
-        Status target = (Status)st;
-        int found = 0;
-
-        showHeader();
-        for (int i = 0; i < size; i++) {
-            if (list[i].getStatus() == target) {
-                list[i].printRow();
-                found = 1;
+        bool found = false;
+        for (int i = 0; i < (int)list.size(); i++) {
+            if ((int)list[i].getStatus() == s) {
+                list[i].display();
+                found = true;
             }
         }
 
-        if (!found) cout << "Khong co cong viec nao theo trang thai nay.\n";
+        if (!found) {
+            cout << "Khong co cong viec nao theo trang thai nay.\n";
+        }
     }
 };
 
@@ -280,11 +245,14 @@ int main() {
 
     while (true) {
         manager.showMenu();
+
         if (!(cin >> choice)) {
-            cout << "Nhap sai kieu du lieu.\n";
-            clearInputLine();
+            cout << "Nhap sai kieu du lieu!\n";
+            cin.clear();
+            cin.ignore(10000, '\n');
             continue;
         }
+        cin.ignore(10000, '\n');
 
         if (choice == 1) manager.showList();
         else if (choice == 2) manager.addWork();
@@ -295,10 +263,9 @@ int main() {
             cout << "Thoat chuong trinh.\n";
             break;
         } else {
-            cout << "Lua chon khong hop le (1-6).\n";
+            cout << "Lua chon khong hop le (1-6)!\n";
         }
     }
 
     return 0;
 }
-
